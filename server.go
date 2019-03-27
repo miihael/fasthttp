@@ -1248,9 +1248,7 @@ func (ctx *RequestCtx) Logger() Logger {
 		ctx.logger.logger = ctx.s.logger()
 	}
 	if ctx.logger.printf == nil {
-		ctx.logger.printf = func(ctx *RequestCtx, logger Logger, format string, args ...interface{}) {
-			defaultCtxPrintf(ctx, ctx.logger.logger, format, args...)
-		}
+		ctx.logger.printf = defaultCtxPrintf
 	}
 	return &ctx.logger
 }

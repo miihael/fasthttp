@@ -471,7 +471,7 @@ type RequestCtx struct {
 
 	time time.Time
 
-	logger CtxLogger
+	logger ctxLogger
 	s      *Server
 	c      net.Conn
 	fbr    firstByteReader
@@ -651,12 +651,12 @@ type Logger interface {
 
 var ctxLoggerLock sync.Mutex
 
-type CtxLogger struct {
+type ctxLogger struct {
 	ctx    *RequestCtx
 	logger Logger
 }
 
-func (cl *CtxLogger) Printf(format string, args ...interface{}) {
+func (cl *ctxLogger) Printf(format string, args ...interface{}) {
 	ctxLoggerLock.Lock()
 	msg := fmt.Sprintf(format, args...)
 	ctx := cl.ctx
@@ -1241,6 +1241,11 @@ func (ctx *RequestCtx) Logger() Logger {
 	if ctx.logger.logger == nil {
 		ctx.logger.logger = ctx.s.logger()
 	}
+	return &ctx.logger
+}
+
+func (ctx *RequestCtx) SetLogger(Logger lggr) Logger {
+	ctx.logger.logger = lggr
 	return &ctx.logger
 }
 

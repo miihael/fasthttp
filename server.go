@@ -651,16 +651,22 @@ type Logger interface {
 
 var ctxLoggerLock sync.Mutex
 
+type CtxPrintf func(ctx *RequestCtx, logger Logger, format string, args ...interface{})
+
 type ctxLogger struct {
 	ctx    *RequestCtx
 	logger Logger
+	printf CtxPrintf
 }
 
-func (cl *ctxLogger) Printf(format string, args ...interface{}) {
+func (cl ctxLogger) Printf(format string, args ...interface{}) {
+	cl.printf(cl.ctx, cl.logger, format, args...)
+}
+
+func defaultCtxPrintf(ctx *RequestCtx, logger Logger, format string, args ...interface{}) {
 	ctxLoggerLock.Lock()
 	msg := fmt.Sprintf(format, args...)
-	ctx := cl.ctx
-	cl.logger.Printf("%.3f %s - %s", time.Since(ctx.Time()).Seconds(), ctx.String(), msg)
+	logger.Printf("%.3f %s - %s", time.Since(ctx.Time()).Seconds(), ctx.String(), msg)
 	ctxLoggerLock.Unlock()
 }
 
@@ -1241,12 +1247,16 @@ func (ctx *RequestCtx) Logger() Logger {
 	if ctx.logger.logger == nil {
 		ctx.logger.logger = ctx.s.logger()
 	}
+	if ctx.logger.printf == nil {
+		ctx.logger.printf = func(ctx *RequestCtx, logger Logger, format string, args ...interface{}) {
+			defaultCtxPrintf(ctx, ctx.logger.logger, format, args...)
+		}
+	}
 	return &ctx.logger
 }
 
-func (ctx *RequestCtx) SetLogger(Logger lggr) Logger {
-	ctx.logger.logger = lggr
-	return &ctx.logger
+func (ctx *RequestCtx) SetLoggerFunc(f CtxPrintf) {
+	ctx.logger.printf = f
 }
 
 // TimeoutError sets response status code to StatusRequestTimeout and sets

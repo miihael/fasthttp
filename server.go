@@ -1253,7 +1253,11 @@ func (ctx *RequestCtx) Logger() Logger {
 	return &ctx.logger
 }
 
-func (ctx *RequestCtx) SetLoggerFunc(f CtxPrintf) {
+// Set custom Printf function of a context Logger.
+// The function recieves ctx and current logger as first arguments.
+// This allows usage of JSON loggers (e.g. zerolog, zap)
+
+func (ctx *RequestCtx) SetLoggerPrintf(f CtxPrintf) {
 	ctx.logger.printf = f
 }
 
